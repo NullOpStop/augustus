@@ -9,14 +9,14 @@
  * Each stage seeds its own RNG stream from (seed, stage id).
  */
 
+// The values seed each stage's random stream; changing one changes every world, so keep them fixed
 typedef enum {
-    WORLDGEN_STAGE_SHAPE = 1,
-    WORLDGEN_STAGE_WATER,
-    WORLDGEN_STAGE_SURFACE,
-    WORLDGEN_STAGE_RESOURCES,
-    WORLDGEN_STAGE_SITES,
-    WORLDGEN_STAGE_VARIANT,
-    WORLDGEN_STAGE_RAMPS
+    WORLDGEN_STAGE_LAYOUT = 1,
+    WORLDGEN_STAGE_SURFACE = 3,
+    WORLDGEN_STAGE_RESOURCES = 4,
+    WORLDGEN_STAGE_SITES = 5,
+    WORLDGEN_STAGE_VARIANT = 6,
+    WORLDGEN_STAGE_RAMPS = 7
 } worldgen_stage;
 
 /**
@@ -26,17 +26,12 @@ typedef enum {
 void worldgen_enforce_single_steps(worldgen_world *world);
 
 /**
- * Template, continuous elevation and terraced engine levels.
+ * The big picture: sea or island coast, rivers, lakes and ponds, and raised plateaus with smooth outlines.
  */
-void worldgen_generate_shape(worldgen_world *world);
+void worldgen_generate_layout(worldgen_world *world);
 
 /**
- * Sea, lakes and rivers from a drainage simulation, plus shallows along every shore.
- */
-void worldgen_generate_water(worldgen_world *world);
-
-/**
- * Forests, meadow, rock outcrops and marsh.
+ * Groves, scattered trees and shrubs, rock outcrops, floodplain meadows and marsh.
  */
 void worldgen_generate_surface(worldgen_world *world);
 

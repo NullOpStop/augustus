@@ -4,14 +4,18 @@
 #include "core/dir.h"
 #include "core/log.h"
 #include "frontier/frontier_game.h"
+#include "frontier/map_stats.h"
 #include "graphics/screenshot.h"
 #include "game/file.h"
 #include "game/file_io.h"
 #include "game/tick.h"
 #include "graphics/window.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/terrain.h"
 #include "map/tiles.h"
+#include "scenario/property.h"
+#include "window/city.h"
 #include "window/frontier_setup.h"
 #include "window/main_menu.h"
 
@@ -26,6 +30,8 @@ static int frames_drawn;
 static int show_setup;
 static int simulate_ticks;
 static int save_test;
+static char load_name[64];
+static int show_fog;
 
 static int parse_spec(const char *spec, worldgen_settings *settings)
 {
@@ -65,6 +71,11 @@ static int parse_spec(const char *spec, worldgen_settings *settings)
             simulate_ticks = atoi(value);
         } else if (strcmp(pair, "savetest") == 0) {
             save_test = atoi(value);
+        } else if (strcmp(pair, "fog") == 0) {
+            show_fog = atoi(value);
+        } else if (strcmp(pair, "load") == 0) {
+            strncpy(load_name, value, sizeof(load_name) - 1);
+            load_name[sizeof(load_name) - 1] = 0;
         } else {
             log_error("Frontier render: unknown setting", pair, 0);
             return 0;
@@ -80,8 +91,22 @@ int frontier_dev_render_start(const char *spec)
     show_setup = 0;
     simulate_ticks = 0;
     save_test = 0;
+    load_name[0] = 0;
+    show_fog = 1;
     if (!parse_spec(spec, &settings)) {
         return 0;
+    }
+    if (load_name[0]) {
+        // an existing scenario, for comparing generated maps with hand-made ones
+        scenario_set_custom(2);
+        window_city_show();
+        if (!game_file_start_scenario_by_name((const uint8_t *) load_name)) {
+            log_error("Frontier render: could not load", load_name, 0);
+            return 0;
+        }
+        frontier_map_stats_log(load_name);
+        frames_drawn = 0;
+        return 1;
     }
     frames_drawn = 0;
     if (show_setup == 2) {
@@ -91,7 +116,14 @@ int frontier_dev_render_start(const char *spec)
         window_frontier_setup_show();
         return 1;
     }
-    return frontier_game_start(&settings);
+    if (!frontier_game_start(&settings)) {
+        return 0;
+    }
+    frontier_map_stats_log("generated");
+    if (!show_fog) {
+        map_fog_clear();
+    }
+    return 1;
 }
 
 static int is_near_road(int x, int y)

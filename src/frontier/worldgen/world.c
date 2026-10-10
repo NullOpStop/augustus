@@ -47,7 +47,6 @@ worldgen_world *worldgen_world_create(const worldgen_settings *settings)
     world->width = settings->size;
     world->height = settings->size;
     world->settings = *settings;
-    world->inflow.x = world->inflow.y = -1;
     world->river_entry.x = world->river_entry.y = -1;
     world->river_exit.x = world->river_exit.y = -1;
     world->start.x = world->start.y = -1;

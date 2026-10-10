@@ -19,6 +19,7 @@
 #define COST_FOREST 3.0
 #define COST_ROCK 6.0
 #define COST_RAMP 4.0
+#define COST_TURN 1.5
 
 static const int DIRECTIONS[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
 
@@ -388,29 +389,37 @@ static double step_cost(const worldgen_world *world, int to)
 }
 
 // A* over walkable land; marks the found path in world->road. Ramps already act as road in the engine.
+// Search states are (tile, direction of arrival) so turns can cost extra: Roman roads run straight,
+// rather than in the staircase a plain grid search gives on diagonals.
 static int lay_road(worldgen_world *world, worldgen_point from, worldgen_point to)
 {
     int tiles = world->width * world->height;
-    double *cost = malloc(tiles * sizeof(double));
-    int *previous = malloc(tiles * sizeof(int));
+    int states = tiles * 4;
+    double *cost = malloc(states * sizeof(double));
+    int *previous = malloc(states * sizeof(int));
     worldgen_heap heap;
-    // a tile can be pushed again each time a cheaper route to it is found
-    heap.items = malloc(tiles * 4 * sizeof(worldgen_heap_item));
+    // a state can be pushed again each time a cheaper route to it is found
+    heap.items = malloc(states * 4 * sizeof(worldgen_heap_item));
     heap.size = 0;
-    int found = 0;
+    int found = -1;
     if (cost && previous && heap.items) {
-        for (int i = 0; i < tiles; i++) {
+        for (int i = 0; i < states; i++) {
             cost[i] = -1;
             previous[i] = -1;
         }
         int start = worldgen_world_index(world, from.x, from.y);
         int goal = worldgen_world_index(world, to.x, to.y);
-        cost[start] = 0;
-        worldgen_heap_push(&heap, 0, start);
-        while (heap.size > 0 && heap.size < tiles * 4 - 4) {
-            int index = worldgen_heap_pop(&heap).index;
+        for (int d = 0; d < 4; d++) {
+            cost[start * 4 + d] = 0;
+            worldgen_heap_push(&heap, 0, start * 4 + d);
+        }
+        while (heap.size > 0 && heap.size < states * 4 - 4) {
+            worldgen_heap_item item = worldgen_heap_pop(&heap);
+            int state = item.index;
+            int index = state / 4;
+            int arrived = state % 4;
             if (index == goal) {
-                found = 1;
+                found = state;
                 break;
             }
             int x = index % world->width;
@@ -421,29 +430,28 @@ static int lay_road(worldgen_world *world, worldgen_point from, worldgen_point t
                 }
                 int nx = x + DIRECTIONS[d][0];
                 int ny = y + DIRECTIONS[d][1];
-                int neighbour = worldgen_world_index(world, nx, ny);
-                double new_cost = cost[index] + step_cost(world, neighbour);
-                if (cost[neighbour] < 0 || new_cost < cost[neighbour]) {
-                    cost[neighbour] = new_cost;
-                    previous[neighbour] = index;
+                int next = worldgen_world_index(world, nx, ny) * 4 + d;
+                double new_cost = cost[state] + step_cost(world, next / 4) + (d != arrived ? COST_TURN : 0);
+                if (cost[next] < 0 || new_cost < cost[next]) {
+                    cost[next] = new_cost;
+                    previous[next] = state;
                     double estimate = abs(nx - to.x) + abs(ny - to.y);
-                    worldgen_heap_push(&heap, new_cost + estimate * COST_GRASS, neighbour);
+                    worldgen_heap_push(&heap, new_cost + estimate * COST_GRASS, next);
                 }
             }
         }
-        if (found) {
-            for (int index = goal; index >= 0; index = previous[index]) {
-                if (!world->ramp[index]) {
-                    world->road[index] = 1;
-                    world->surface[index] = WORLDGEN_SURFACE_GRASS;
-                }
+        for (int state = found; state >= 0; state = previous[state]) {
+            int index = state / 4;
+            if (!world->ramp[index]) {
+                world->road[index] = 1;
+                world->surface[index] = WORLDGEN_SURFACE_GRASS;
             }
         }
     }
     free(cost);
     free(previous);
     free(heap.items);
-    return found;
+    return found >= 0;
 }
 
 void worldgen_generate_sites(worldgen_world *world)

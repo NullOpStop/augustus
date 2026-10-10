@@ -147,41 +147,37 @@ tools/worldgen_preview/ CLI: seed + settings -> PNG
 | Natives | none / few / many |
 | Economy & start | funds, difficulty, allowed industries (feeds the scenario, not terrain) |
 
-### 1. Macro shape
+### 1. Layout (composition, not noise)
 
-Pick a template that decides the big picture before any noise: where the coast is, where the main
-river runs, where the highlands sit. Templates give each world a readable identity and guarantee
-variety. Noise then adds detail inside that frame.
+The first noise-terrace generator looked messy: cliffs everywhere, speckled rock and meadow, dozens of
+stray water bodies. Measured against the 12 hand-made Caesar III maps (`--worldgen-render "load=NAME"`
+logs `MAPSTATS`), the difference was clear:
 
-### 2. Height
+| | Hand-made 160x160 maps | Noise terraces | Composed layout |
+|---|---|---|---|
+| Cliff tiles | 0.2-2.5% | 7.5-19% | ~1.2% |
+| Land on level 0 | 94-100% | 15-62% | ~93% |
+| Separate water bodies | 2-8 | 14-66 | 1-3 |
+| Trees | 4-26% | ~20% (blobs) | ~15% |
+| Rock | 2-3% | 8-15% | ~2% |
 
-- Continuous heightfield from fbm simplex noise plus template bias, with domain warp for natural
-  shapes.
-- Quantize to engine levels 0..5 (most land 0..2, highlands up to 5).
-- Enforce the one-step rule and clean up single-tile pits and spikes.
-- Find every plateau (connected region at the same level) and place at least one valid 2x2 access
-  ramp to a lower neighbour; isolated plateaus without a ramp site get flattened.
+So worlds are composed from a few deliberate features:
+- Sea along one side (coastal) or around a smooth island.
+- One main river edge to edge, meandering with fading amplitude so it meets the edges squarely,
+  3-6 tiles wide, sometimes splitting around an island; 0-2 tributaries; lakes strung along it.
+- A few ponds.
+- Raised ground only as landmarks: plateaus with smooth outlines, kept clear of water, some
+  stepped to level 2 (level 3 in rugged highlands), often running off the map edge.
 
-### 3. Water
+### 2. Surface
 
-- Sea along template edges below sea level.
-- Rivers: start in highlands, follow the downhill gradient (with meander noise) to the sea or map
-  edge. Width from accumulated flow: tributaries 1-2 tiles (not navigable), the main river at least
-  3 tiles (navigable) from edge to edge.
-- Lakes fill closed depressions.
-- Shallow water band along shores; deep water elsewhere so boat routes work.
-- Marsh on low, wet, flat land next to water, kept away from planned bridge crossings.
+- Forests from a noise field cut at the level that gives the wanted share of open land (about
+  16% at normal), leaning towards the map margins, with ragged edges of shrubs and stray trees.
+- Lone trees and shrubs in loose clumps over open grass.
+- Rock in a few outcrops, mostly on raised ground.
+- Yellow floodplain meadow along rivers and lakes; occasional marsh at the water's edge.
 
-### 4. Surface
-
-Moisture = distance to water + noise. Then classify land:
-- Meadow: low, moist river valleys and lake shores (the "fertile" land, since farms need meadow).
-- Grass: the default buildable land.
-- Shrub and forest: moist uplands and bands between valleys.
-- Rock outcrops: on hills and slopes, grouped into 2x2 and 3x3 blocks so the engine uses its large
-  rock images.
-
-### 5. Resources
+### 3. Resources
 
 The engine ties every mine to "any rock" and clay/sand to "any water". Frontier mode adds **real
 deposits**, a small mode-only mechanic (see decisions):
@@ -189,7 +185,7 @@ deposits**, a small mode-only mechanic (see decisions):
 - Further out: marble in hills, iron in highlands, vines/olives on specific meadow types, gold rare.
 - Richness setting scales count, cluster size and distance.
 
-### 6. Start site and the via
+### 4. Start site and the via
 
 - Score candidate sites: buildable flat area, meadow, water (for reservoir and clay), timber and
   stone within reach, away from edges and invasion points, not in marsh.
@@ -198,14 +194,14 @@ deposits**, a small mode-only mechanic (see decisions):
   the world model. Where it must cross a river, shape the crossing so a straight bridge fits.
 - Fog of war starts revealed around the settlement and along the nearby stretch of road.
 
-### 7. Points and natives
+### 5. Points and natives
 
 - Entry/exit at the via's ends. River entry/exit at the navigable river's ends.
 - Invasion points: clear, reachable edge tiles, spread around the world, far from the start.
 - Herd points on open grassland away from the start. Fishing points on navigable water.
 - Native villages (huts + meeting centre) at mid distance on meadow/forest edges.
 
-### 8. Validation
+### 6. Validation
 
 Reject and retry (deterministically) if any check fails:
 - Entry, start and exit connected over walkable land.
@@ -214,7 +210,7 @@ Reject and retry (deterministically) if any check fails:
 - Every essential resource within a radius of the start; luxuries exist somewhere.
 - Enough buildable flat land at the start.
 
-### 9. Export
+### 7. Export
 
 Write terrain flags and elevation, init the map edge, random grid and alternate terrain, run the
 engine's tile updates, set scenario metadata (size, climate, points, allowed buildings, funds), then
@@ -237,30 +233,19 @@ Keriew/augustus#1723 by bacox (AGPL, credit in file headers and commits):
 2. **The via is long, and that is fine.** Entry and exit sit on the world edge; immigrants and
    traders walk the road to the settlement.
 3. **Shaped worlds.** Templates set the big picture, noise adds detail.
-4. **Use the full elevation range (0..5) and make it dramatic.** See below.
+4. **Elevation as landmarks.** First tried the full 0..5 range everywhere; revised after play, see below.
 5. **Development size.** Build and tune at <= 160 while grid widening proceeds separately.
 
 ## Elevation design
 
-The engine supports six levels (0..5); hand-made maps rarely use more than one or two. Frontier
-worlds use all of them, as broad terraces rather than noise speckle:
+Revised after the first play (2026-10-10): terraces everywhere looked messy because Caesar III draws
+every level change as a rocky cliff line. Elevation is now a landmark, not the ground:
 
-- **Lowlands (0):** sea, rivers, lakes, marsh and the fertile meadow valleys. Water is always level 0.
-- **Rolling hills (1-2):** wide terraces, plenty of buildable land, stone and marble outcrops.
-- **Highlands (3-4):** stepped plateaus with forest and rock; iron lives here.
-- **Peaks (5):** small summits with the rarest deposits (gold).
-
-Rules that make it work in the engine:
-- Each terrace is a broad, connected plateau (minimum area, minimum width so a ramp fits); tiny
-  remnants are merged into a neighbour level.
-- Each step is one level, so climbing 0 to 4 means passing through every terrace. Every plateau gets
-  at least one 2x2 access ramp, placed so the climb from the start reads like a route: switchbacks
-  up the highlands.
-- Rivers stay at level 0 and cut through higher ground, leaving gorges with cliff walls on both banks.
-- Mesas: isolated raised plateaus with a single ramp. Slopes are impassable to enemies, so these are
-  natural fortress sites.
-- The start area is kept mostly at levels 0-1 so early building is not a puzzle.
-- Valuable deposits sit higher up: climbing is rewarded.
+- Most land stays on level 0, like hand-made maps.
+- Plateaus are few, smooth-edged, kept clear of rivers and lakes, and often run off the map edge.
+- Larger plateaus may step up to level 2; rugged highlands reach level 3 at a peak.
+- Every terrace gets access ramps where the edge allows (see gen_ramps.c); a plateau with a single
+  ramp is a natural fortress, since enemies cannot climb cliffs.
 
 ## Build order
 

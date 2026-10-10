@@ -73,16 +73,12 @@ typedef struct {
     int width;
     int height;
     worldgen_settings settings;
-    double sea_level;               // threshold on elevation below which the template wants sea
-    worldgen_point inflow;          // map edge tile where a river flows in from off the map, x < 0 if none
-    double drain_x;                 // downhill direction across the world; water leaves through edges
-    double drain_y;                 // on that side. Both zero means it may leave through any edge
     worldgen_point river_entry;     // navigable river ends on the map edge, used by trade ships; x < 0 if none
     worldgen_point river_exit;
     worldgen_point start;           // where the player's settlement begins, x < 0 if none
     worldgen_point entry;           // land entry and exit on the map edge, joined to the start by the road
     worldgen_point exit;
-    double *elevation;              // continuous height, 0..1
+    double *elevation;              // continuous height, 0..1, following the terraces
     uint8_t *level;                 // engine elevation, 0..WORLDGEN_MAX_LEVEL
     uint8_t *water;                 // worldgen_water
     uint8_t *surface;               // worldgen_surface

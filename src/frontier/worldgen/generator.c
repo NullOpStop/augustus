@@ -19,8 +19,7 @@ worldgen_world *worldgen_generate(const worldgen_settings *settings)
     if (!world) {
         return 0;
     }
-    worldgen_generate_shape(world);
-    worldgen_generate_water(world);
+    worldgen_generate_layout(world);
     worldgen_generate_surface(world);
     worldgen_generate_ramps(world);
     worldgen_generate_sites(world);
