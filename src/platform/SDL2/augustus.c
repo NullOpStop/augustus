@@ -30,6 +30,7 @@
 #include "platform/touch.h"
 #include "platform/switch/switch.h"
 #include "platform/vita/vita.h"
+#include "frontier/dev_render.h"
 #include "window/asset_previewer.h"
 
 #include "tinyfiledialogs/tinyfiledialogs.h"
@@ -66,6 +67,8 @@ static struct {
         Uint32 last_update_time;
     } fps;
 } data = { 1 };
+
+static const char *worldgen_render_spec;
 
 #ifdef __IOS__
 static augustus_args args;
@@ -427,6 +430,12 @@ static void main_loop(void)
     }
     if (data.active) {
         run_and_draw();
+        if (worldgen_render_spec) {
+            int render_status = frontier_dev_render_update();
+            if (render_status) {
+                exit_with_status(render_status > 0 ? 0 : 3);
+            }
+        }
     } else {
         SDL_WaitEvent(NULL);
     }
@@ -688,6 +697,11 @@ static void setup(const augustus_args *args)
     if (!result) {
         SDL_Log("Exiting: game init failed");
         exit_with_status(2);
+    }
+
+    worldgen_render_spec = args->worldgen_render_spec;
+    if (worldgen_render_spec && !frontier_dev_render_start(worldgen_render_spec)) {
+        exit_with_status(3);
     }
 
     data.quit = 0;

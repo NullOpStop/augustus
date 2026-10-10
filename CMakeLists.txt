@@ -15,6 +15,7 @@ option(DRAW_HIGHWAY_TERRAIN "Draw highway debug information." OFF)
 option(DRAW_ROAD_NETWORK_IDS "Draw road network IDs for debugging." OFF)
 option(DRAW_TILE_COORDS "Draw tile coordinates." OFF)
 option(AV1_VIDEO_SUPPORT "Enable AV1 video support." OFF)
+option(BUILD_WORLDGEN_PREVIEW "Build the frontier world generation preview tool." OFF)
 
 if(${TARGET_PLATFORM} STREQUAL "vita" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     if(DEFINED ENV{VITASDK})
@@ -782,6 +783,21 @@ set(TRANSLATION_FILES
     ${PROJECT_SOURCE_DIR}/src/translation/ukrainian.c
 )
 
+set(FRONTIER_WORLDGEN_FILES
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_shape.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_surface.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_water.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/generator.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/noise.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/rng.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/world.c
+)
+
+set(FRONTIER_FILES
+    ${PROJECT_SOURCE_DIR}/src/frontier/dev_render.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/world_export.c
+)
+
 set(MACOSX_FILES "")
 if(APPLE)
     function(resource VAR SOURCE_PATH DESTINATION PATTERN)
@@ -843,6 +859,8 @@ set(SOURCE_FILES
     ${WINDOW_FILES}
     ${EDITOR_FILES}
     ${TRANSLATION_FILES}
+    ${FRONTIER_FILES}
+    ${FRONTIER_WORLDGEN_FILES}
     ${TINYFD_FILES}
     ${SPNG_FILES}
     ${SXML_FILES}
@@ -1044,6 +1062,16 @@ include_directories(SYSTEM ext)
 include_directories(src)
 if(MSVC)
     include_directories(SYSTEM ext/dirent)
+endif()
+
+if(BUILD_WORLDGEN_PREVIEW)
+    add_executable(worldgen_preview
+        ${PROJECT_SOURCE_DIR}/tools/worldgen_preview/main.c
+        ${FRONTIER_WORLDGEN_FILES}
+    )
+    if(NOT MSVC)
+        target_link_libraries(worldgen_preview m)
+    endif()
 endif()
 
 if (AV1_VIDEO_SUPPORT)

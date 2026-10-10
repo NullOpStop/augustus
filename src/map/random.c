@@ -26,6 +26,11 @@ int map_random_get(int grid_offset)
     return random.items[grid_offset];
 }
 
+void map_random_set(int grid_offset, int value)
+{
+    random.items[grid_offset] = (uint8_t) value;
+}
+
 int map_random_get_from_buffer(buffer *buf, int grid_offset)
 {
     buffer_set(buf, grid_offset);

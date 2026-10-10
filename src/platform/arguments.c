@@ -9,6 +9,7 @@
 #define WINDOWED_AND_FULLSCREEN_ERROR_MESSAGE "Option --windowed and --fullscreen cannot both be specified"
 #define DISPLAY_ID_ERROR_MESSAGE "Option --display must be followed by a number indicating the display, starting from 0"
 #define UNKNOWN_OPTION_ERROR_MESSAGE "Option %s not recognized"
+#define WORLDGEN_RENDER_ERROR_MESSAGE "Option --worldgen-render must be followed by settings, e.g. seed=42,template=coastal"
 
 static void print_log(const char *message)
 {
@@ -70,6 +71,7 @@ int platform_parse_arguments(int argc, char **argv, augustus_args *output_args)
     output_args->cursor_scale_percentage = 0;
     output_args->force_windowed = 0;
     output_args->launch_asset_previewer = 0;
+    output_args->worldgen_render_spec = 0;
     output_args->enable_joysticks = 0;
     output_args->use_software_cursor = 0;
     output_args->force_fullscreen = 0;
@@ -120,6 +122,14 @@ int platform_parse_arguments(int argc, char **argv, augustus_args *output_args)
             }
         } else if (strcmp(argv[i], "--windowed") == 0) {
             output_args->force_windowed = 1;
+        } else if (strcmp(argv[i], "--worldgen-render") == 0) {
+            if (i + 1 < argc) {
+                output_args->worldgen_render_spec = argv[i + 1];
+                i++;
+            } else {
+                print_log(WORLDGEN_RENDER_ERROR_MESSAGE);
+                ok = 0;
+            }
         } else if (strcmp(argv[i], "--asset-previewer") == 0) {
             output_args->launch_asset_previewer = 1;
         } else if (strcmp(argv[i], "--enable-joysticks") == 0) {
@@ -161,6 +171,9 @@ int platform_parse_arguments(int argc, char **argv, augustus_args *output_args)
         print_log("          Forces the game to start on the specified display, numbered from 0");
         print_log("--asset-previewer");
         print_log("          Runs the extra asset previewer instead of the game");
+        print_log("--worldgen-render SETTINGS");
+        print_log("          Generates a frontier world, saves full city and minimap screenshots and exits.");
+        print_log("          SETTINGS: seed=N,size=40|60|80|100|120|160,template=NAME,climate=0|1|2,water=N,relief=N,forest=N");
         print_log("--enable-joysticks");
         print_log("          Enables joystick support");
         print_log("--software-cursor");
