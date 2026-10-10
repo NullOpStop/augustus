@@ -1,6 +1,7 @@
 # Frontier mode: world generation design
 
-Status: draft, 2026-10-10. Living document for the `frontier-mode` branch.
+Status: living document for the `frontier-mode` branch, updated 2026-10-10. Project overview, status
+and developer tools: [README.md](README.md).
 
 ## Goal
 
@@ -105,22 +106,26 @@ Why:
   tuned without launching the game.
 - Validation and tests run on the world model, not on game state.
 
-Proposed layout (all new code, nothing in existing modules except the exporter's calls into them):
+Layout (all new code; existing modules are only called by the exporter):
 
 ```
 src/frontier/worldgen/
-    rng.c/.h            seeded PCG32, one sub-stream per stage
+    rng.c/.h            seeded PCG32, one stream per stage (stage numbers in stages.h are fixed)
     noise.c/.h          2D simplex noise, fbm, domain warp
-    world.c/.h          world model: per-cell height, water, surface, deposit, flags
-    gen_shape.c         macro template, heightfield, terracing
-    gen_water.c         sea, lakes, rivers, shallows, marsh
-    gen_surface.c       meadow, grass, shrub, forest, rock outcrops
-    gen_resources.c     deposits and resource balance
-    gen_sites.c         start site, entry/exit road, points, natives
-    validate.c          playability checks
-    export.c            world model -> Augustus terrain/elevation/scenario
-tools/worldgen_preview/ CLI: seed + settings -> PNG
+    heap.c/.h           min-heap for the road A*
+    world.c/.h          world model: per-tile level, water, surface, deposit, variant, road, ramp; points
+    generator.c         runs the stages in order
+    gen_layout.c        composition: sea or island, rivers, tributaries, island forks, lakes, ponds,
+                        plateaus, clean-up, shallows, sea route
+    gen_surface.c       rock outcrops, floodplain meadow, marsh, forests, lone trees and shrubs
+    gen_ramps.c         access ramps so every terrace is reachable (union-find over level regions)
+    gen_sites.c         start site, entry and exit, the road (direction-aware A*)
+    preview.c/.h        colours for the PNG tool and the setup window preview
+src/frontier/world_export.c   world model -> Augustus grids, images, ramps, points
+tools/worldgen_preview/       CLI: seed + settings -> PNG
 ```
+
+Not written yet: `gen_resources.c` (deposits), points and natives, `validate.c`.
 
 ### Determinism
 
@@ -249,11 +254,11 @@ every level change as a rocky cliff line. Elevation is now a landmark, not the g
 
 ## Build order
 
-1. World model, RNG, noise and the PNG preview tool.
-2. Height and water, tuned visually in the preview tool.
-3. Surface and resources.
-4. Start site, via, points, validation.
-5. Exporter and starting a game from it (still at <= 160).
-6. Pre-game settings window.
-7. Fog of war (separate design).
+1. ~~World model, RNG, noise and the PNG preview tool.~~
+2. ~~Height and water, tuned visually.~~ Redone as a composed layout after the first play.
+3. Surface ~~done~~; resources (deposits) not started.
+4. Start site and the road ~~done~~; points, natives and validation not started.
+5. ~~Exporter and starting a game from it (<= 160, via a temporary `.mapx`).~~
+6. ~~Pre-game settings window~~ (world settings only; economy settings to come).
+7. ~~Fog of war.~~
 8. Grid widening to 512/1024 (separate design).
