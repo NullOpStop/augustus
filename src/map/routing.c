@@ -6,6 +6,7 @@
 #include "core/time.h"
 #include "map/building.h"
 #include "map/figure.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/road_aqueduct.h"
 #include "map/routing_data.h"
@@ -322,7 +323,7 @@ void map_routing_calculate_distances_water_flotsam(int x, int y)
 
 static int callback_calc_distance_build_wall(int next_offset, int dist, int direction)
 {
-    if (terrain_land_citizen.items[next_offset] == CITIZEN_4_CLEAR_TERRAIN) {
+    if (terrain_land_citizen.items[next_offset] == CITIZEN_4_CLEAR_TERRAIN && map_fog_is_explored(next_offset)) {
         enqueue(next_offset, dist);
     }
     return 1;
@@ -343,6 +344,9 @@ static int can_build_highway(int next_offset, int check_highway_routing)
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
             int offset = next_offset + map_grid_delta(x, y);
+            if (!map_fog_is_explored(offset)) {
+                return 0;
+            }
             int terrain = map_terrain_get(offset);
             int forbidden = terrain & TERRAIN_NOT_CLEAR & ~TERRAIN_HIGHWAY & ~TERRAIN_ROAD;
             if (forbidden && !(terrain & TERRAIN_AQUEDUCT)) {
@@ -368,7 +372,7 @@ static int callback_calc_distance_build_highway(int next_offset, int dist, int d
 
 static int callback_calc_distance_build_road(int next_offset, int dist, int direction)
 {
-    int blocked = 0;
+    int blocked = !map_fog_is_explored(next_offset);
     switch (terrain_land_citizen.items[next_offset]) {
         case GATE_0_TRANSFORMABLE:
             // can be transformed to gate, so not blocked for road building
@@ -406,7 +410,7 @@ static int callback_calc_distance_build_aqueduct(int next_offset, int dist, int 
         return 1;
     }
 
-    int blocked = 0;
+    int blocked = !map_fog_is_explored(next_offset);
     switch (terrain_land_citizen.items[next_offset]) {
         case CITIZEN_N3_AQUEDUCT:
         case CITIZEN_2_PASSABLE_TERRAIN: // rubble, garden, access ramp
@@ -437,6 +441,9 @@ static int callback_calc_distance_build_aqueduct(int next_offset, int dist, int 
 
 static int can_place_initial_road_or_aqueduct(int grid_offset, int is_aqueduct)
 {
+    if (!map_fog_is_explored(grid_offset)) {
+        return 0;
+    }
     if (is_aqueduct && !map_can_place_aqueduct_on_highway(grid_offset, 0)) {
         return 0;
     }

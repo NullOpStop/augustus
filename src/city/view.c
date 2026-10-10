@@ -7,6 +7,7 @@
 #include "editor/editor.h"
 #include "graphics/menu.h"
 #include "graphics/renderer.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/image.h"
 #include "widget/minimap.h"
@@ -718,7 +719,7 @@ void city_view_foreach_valid_map_tile(map_callback *callback)
             for (int x = 0; x < data.viewport.width_tiles + 9; x++) {
                 if (x_view >= 0 && x_view < VIEW_X_MAX) {
                     int grid_offset = view_to_grid_offset_lookup[x_view][y_view];
-                    if (grid_offset >= 0) {
+                    if (grid_offset >= 0 && map_fog_is_explored(grid_offset)) {
                         callback(x_graphic, y_graphic, grid_offset);
                     }
                 }
@@ -751,7 +752,7 @@ void city_view_foreach_valid_map_tile_row(map_callback *callback1, map_callback 
                 for (int x = 0; x < data.viewport.width_tiles + 9; x++) {
                     if (x_view >= 0 && x_view < VIEW_X_MAX) {
                         int grid_offset = view_to_grid_offset_lookup[x_view][y_view];
-                        if (grid_offset >= 0) {
+                        if (grid_offset >= 0 && map_fog_is_explored(grid_offset)) {
                             callback1(x_graphic, y_graphic, grid_offset);
                         }
                     }
@@ -770,7 +771,7 @@ void city_view_foreach_valid_map_tile_row(map_callback *callback1, map_callback 
                 for (int x = 0; x < data.viewport.width_tiles + 9; x++) {
                     if (x_view >= 0 && x_view < VIEW_X_MAX) {
                         int grid_offset = view_to_grid_offset_lookup[x_view][y_view];
-                        if (grid_offset >= 0) {
+                        if (grid_offset >= 0 && map_fog_is_explored(grid_offset)) {
                             callback2(x_graphic, y_graphic, grid_offset);
                         }
                     }
@@ -789,7 +790,7 @@ void city_view_foreach_valid_map_tile_row(map_callback *callback1, map_callback 
                 for (int x = 0; x < data.viewport.width_tiles + 9; x++) {
                     if (x_view >= 0 && x_view < VIEW_X_MAX) {
                         int grid_offset = view_to_grid_offset_lookup[x_view][y_view];
-                        if (grid_offset >= 0) {
+                        if (grid_offset >= 0 && map_fog_is_explored(grid_offset)) {
                             callback3(x_graphic, y_graphic, grid_offset);
                         }
                     }

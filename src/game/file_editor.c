@@ -33,6 +33,7 @@
 #include "map/building.h"
 #include "map/desirability.h"
 #include "map/elevation.h"
+#include "map/fog.h"
 #include "map/figure.h"
 #include "map/image.h"
 #include "map/image_context.h"
@@ -100,6 +101,7 @@ static void clear_map_data(void)
     map_elevation_clear();
     map_soldier_strength_clear();
     map_road_network_clear();
+    map_fog_clear();
 
     map_image_context_init();
     map_terrain_init_outside_map();

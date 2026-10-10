@@ -40,6 +40,7 @@
 #include "map/building.h"
 #include "map/desirability.h"
 #include "map/elevation.h"
+#include "map/fog.h"
 #include "map/figure.h"
 #include "map/image.h"
 #include "map/property.h"
@@ -240,6 +241,7 @@ typedef struct {
     buffer *production_rates;
     buffer *monument_stages;
     buffer *finance_ledger;
+    buffer *fog;
 } savegame_state;
 
 typedef struct {
@@ -756,6 +758,9 @@ static void init_savegame_data(savegame_version_t version)
     if (version > SAVE_GAME_LAST_NO_LEDGER) {
         state->finance_ledger = create_savegame_piece(PIECE_SIZE_DYNAMIC, 0);
     }
+    if (version > SAVE_GAME_LAST_NO_FOG_OF_WAR) {
+        state->fog = create_savegame_piece(4 + GRID_SIZE_BUF_U8, 1);
+    }
 }
 
 static void scenario_load_from_state(scenario_state *file, scenario_version_t version)
@@ -1075,6 +1080,11 @@ static void savegame_load_from_state(savegame_state *state, savegame_version_t v
     if (version <= SAVE_GAME_LAST_NO_HOUSE_MODELS) {
         scenario_events_population_migrate_counting();
     }
+    if (version > SAVE_GAME_LAST_NO_FOG_OF_WAR) {
+        map_fog_load_state(state->fog);
+    } else {
+        map_fog_clear();
+    }
 }
 
 static void savegame_save_to_state(savegame_state *state)
@@ -1170,6 +1180,7 @@ static void savegame_save_to_state(savegame_state *state)
 
     city_finance_ledger_save_state(state->finance_ledger);
     building_monument_save_stages(state->monument_stages);
+    map_fog_save_state(state->fog);
 }
 
 static int get_scenario_version(FILE *fp)

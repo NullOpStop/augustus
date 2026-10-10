@@ -30,6 +30,7 @@
 #include "input/zoom.h"
 #include "input/touch.h"
 #include "map/building.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "scenario/property.h"
 #include "sound/city.h"
@@ -288,6 +289,10 @@ static void update_city_view_coords(int x, int y, map_tile *tile)
         city_view_set_selected_view_tile(&view);
         tile->x = map_grid_offset_to_x(tile->grid_offset);
         tile->y = map_grid_offset_to_y(tile->grid_offset);
+        // hidden tiles cannot be built on or inspected, but legions can be sent into them to scout
+        if (!map_fog_is_explored(tile->grid_offset) && !window_is(WINDOW_CITY_MILITARY)) {
+            tile->grid_offset = tile->x = tile->y = 0;
+        }
     } else {
         tile->grid_offset = tile->x = tile->y = 0;
     }

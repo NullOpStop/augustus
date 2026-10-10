@@ -507,6 +507,7 @@ set(MAP_FILES
     ${PROJECT_SOURCE_DIR}/src/map/desirability.c
     ${PROJECT_SOURCE_DIR}/src/map/elevation.c
     ${PROJECT_SOURCE_DIR}/src/map/figure.c
+    ${PROJECT_SOURCE_DIR}/src/map/fog.c
     ${PROJECT_SOURCE_DIR}/src/map/grid.c
     ${PROJECT_SOURCE_DIR}/src/map/image.c
     ${PROJECT_SOURCE_DIR}/src/map/image_context.c

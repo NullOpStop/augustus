@@ -32,6 +32,7 @@
 #include "map/building_tiles.h"
 #include "map/data.h"
 #include "map/figure.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/image_context.h"
 #include "map/orientation.h"
@@ -173,6 +174,9 @@ static int is_blocked_for_building(int grid_offset, int building_size, int *bloc
             figure_animal_try_nudge_at(grid_offset, tile_offset, building_size);
         }
         if (map_property_is_outskirts(tile_offset) && building_is_military(data.ghost_building.type)) {
+            tile_blocked = 1;
+        }
+        if (!map_fog_is_explored(tile_offset)) {
             tile_blocked = 1;
         }
         blocked_tiles[i] = tile_blocked;
@@ -565,7 +569,7 @@ static void draw_default(const map_tile *tile, int x_view, int y_view, building_
             }
         }
 
-        if (fully_blocked || forbidden_terrain ||
+        if (fully_blocked || forbidden_terrain || !map_fog_is_explored(tile_offset) ||
             (map_property_is_outskirts(tile_offset) && building_is_military(type))) {
             blocked_tiles[i] = TILE_FORBIDDEN;
         } else if (check_figure && map_has_figure_at(tile_offset)) {

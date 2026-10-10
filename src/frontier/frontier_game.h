@@ -9,4 +9,9 @@
  */
 int frontier_game_start(const worldgen_settings *settings);
 
+/**
+ * @return Where the last started frontier world put the player's settlement, x < 0 if none
+ */
+worldgen_point frontier_game_start_point(void);
+
 #endif // FRONTIER_FRONTIER_GAME_H

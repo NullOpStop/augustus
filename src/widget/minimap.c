@@ -12,6 +12,7 @@
 #include "graphics/renderer.h"
 #include "map/building.h"
 #include "map/figure.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/property.h"
 #include "map/random.h"
@@ -441,6 +442,12 @@ static void draw_building(int x_offset, int y_offset, int grid_offset)
 static void draw_minimap_tile(int x_view, int y_view, int grid_offset)
 {
     if (grid_offset < 0) {
+        return;
+    }
+    // fog applies to the live city only, not to previews built from other data
+    if (data.functions == &default_functions && !map_fog_is_explored(grid_offset)) {
+        static const tile_color hidden = { COLOR_BLACK, COLOR_BLACK };
+        draw_tile(x_view, y_view, &hidden);
         return;
     }
 

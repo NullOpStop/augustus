@@ -50,6 +50,7 @@
 #include "map/building.h"
 #include "map/desirability.h"
 #include "map/elevation.h"
+#include "map/fog.h"
 #include "map/figure.h"
 #include "map/grid.h"
 #include "map/image.h"
@@ -141,6 +142,7 @@ static void clear_scenario_data(void)
     map_elevation_clear();
     map_soldier_strength_clear();
     map_road_network_clear();
+    map_fog_clear();
 
     map_image_context_init();
     map_random_init();

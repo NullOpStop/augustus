@@ -45,6 +45,7 @@
 #include "game/undo.h"
 #include "graphics/weather.h"
 #include "map/desirability.h"
+#include "map/fog.h"
 #include "map/natives.h"
 #include "map/road_network.h"
 #include "map/routing_terrain.h"
@@ -210,6 +211,7 @@ void game_tick_run(void)
     game_undo_reduce_time_available();
     advance_tick();
     figure_action_handle();
+    map_fog_update();
     scenario_earthquake_process();
     scenario_gladiator_revolt_process();
     scenario_emperor_change_process();

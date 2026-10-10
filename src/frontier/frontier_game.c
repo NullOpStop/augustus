@@ -9,12 +9,22 @@
 #include "frontier/worldgen/generator.h"
 #include "game/file.h"
 #include "game/file_editor.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "scenario/property.h"
 #include "sound/music.h"
 #include "window/city.h"
 
 #define SCENARIO_NAME "frontier_world"
+// how much land around the start is known when the game begins
+#define START_SIGHT 14
+
+static worldgen_point start_point = { -1, -1 };
+
+worldgen_point frontier_game_start_point(void)
+{
+    return start_point;
+}
 
 int frontier_game_start(const worldgen_settings *settings)
 {
@@ -35,6 +45,7 @@ int frontier_game_start(const worldgen_settings *settings)
     scenario_change_climate(settings->climate);
     int exported = frontier_world_export(world);
     worldgen_point start = world->start;
+    start_point = start;
     worldgen_world_free(world);
     if (!exported) {
         log_error("Frontier: export failed", 0, 0);
@@ -58,7 +69,9 @@ int frontier_game_start(const worldgen_settings *settings)
         log_error("Frontier: could not start scenario", path, 0);
         return 0;
     }
+    map_fog_enable();
     if (start.x >= 0) {
+        map_fog_reveal(start.x, start.y, START_SIGHT);
         city_view_go_to_grid_offset(map_grid_offset(start.x, start.y));
     }
     sound_music_update(1);

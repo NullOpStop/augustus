@@ -17,6 +17,7 @@
 #include "map/desirability.h"
 #include "map/elevation.h"
 #include "map/figure.h"
+#include "map/fog.h"
 #include "map/grid.h"
 #include "map/image.h"
 #include "map/image_context.h"
@@ -71,12 +72,14 @@ static int is_clear(int x, int y, int size, int disallowed_terrain, int terrain_
 int map_tiles_are_clear_with_terrain_exception(int x, int y, int size, int disallowed_terrain,
     int terrain_exception, int check_figure)
 {
-    return is_clear(x, y, size, disallowed_terrain, terrain_exception, check_figure, 0);
+    return map_fog_area_is_explored(x, y, size) &&
+        is_clear(x, y, size, disallowed_terrain, terrain_exception, check_figure, 0);
 }
 
 int map_tiles_are_clear(int x, int y, int size, int disallowed_terrain, int check_figure)
 {
-    return is_clear(x, y, size, disallowed_terrain, TERRAIN_CLEAR, check_figure, 0);
+    return map_fog_area_is_explored(x, y, size) &&
+        is_clear(x, y, size, disallowed_terrain, TERRAIN_CLEAR, check_figure, 0);
 }
 
 static void foreach_map_tile(void (*callback)(int x, int y, int grid_offset))
