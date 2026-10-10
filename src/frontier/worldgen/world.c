@@ -47,6 +47,9 @@ worldgen_world *worldgen_world_create(const worldgen_settings *settings)
     world->width = settings->size;
     world->height = settings->size;
     world->settings = *settings;
+    world->inflow.x = world->inflow.y = -1;
+    world->river_entry.x = world->river_entry.y = -1;
+    world->river_exit.x = world->river_exit.y = -1;
     size_t tiles = (size_t) world->width * world->height;
     world->elevation = calloc(tiles, sizeof(double));
     world->level = calloc(tiles, sizeof(uint8_t));

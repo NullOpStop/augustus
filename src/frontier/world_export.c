@@ -106,6 +106,13 @@ int frontier_world_export(const worldgen_world *world)
         scenario_editor_set_exit_point(world->width - 1, edge_y);
     }
 
+    if (world->river_entry.x >= 0) {
+        scenario_editor_set_river_entry_point(world->river_entry.x, world->river_entry.y);
+    }
+    if (world->river_exit.x >= 0) {
+        scenario_editor_set_river_exit_point(world->river_exit.x, world->river_exit.y);
+    }
+
     update_tile_images(world->width, world->height);
     return 1;
 }

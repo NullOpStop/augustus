@@ -38,6 +38,61 @@ static unsigned char *render(const worldgen_world *world, int scale)
     return pixels;
 }
 
+// Same rule as the engine's boat routing: deep water whose 4 neighbours are all water (off-map counts as water)
+static int is_boat_tile(const worldgen_world *world, int x, int y)
+{
+    static const int directions[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
+    if (world->water[worldgen_world_index(world, x, y)] != WORLDGEN_WATER_DEEP) {
+        return 0;
+    }
+    for (int d = 0; d < 4; d++) {
+        int nx = x + directions[d][0];
+        int ny = y + directions[d][1];
+        if (worldgen_world_contains(world, nx, ny) &&
+            world->water[worldgen_world_index(world, nx, ny)] == WORLDGEN_WATER_NONE) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int river_is_navigable(const worldgen_world *world)
+{
+    static const int directions[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
+    worldgen_point from = world->river_entry;
+    worldgen_point to = world->river_exit;
+    if (from.x < 0 || to.x < 0 || !is_boat_tile(world, from.x, from.y)) {
+        return 0;
+    }
+    int tiles = world->width * world->height;
+    int *queue = malloc(tiles * sizeof(int));
+    unsigned char *seen = calloc(tiles, 1);
+    int found = 0;
+    if (queue && seen) {
+        int head = 0;
+        int tail = 0;
+        queue[tail++] = worldgen_world_index(world, from.x, from.y);
+        seen[queue[0]] = 1;
+        while (head < tail && !found) {
+            int x = queue[head] % world->width;
+            int y = queue[head++] / world->width;
+            found = x == to.x && y == to.y;
+            for (int d = 0; d < 4; d++) {
+                int nx = x + directions[d][0];
+                int ny = y + directions[d][1];
+                if (worldgen_world_contains(world, nx, ny) && !seen[worldgen_world_index(world, nx, ny)] &&
+                    is_boat_tile(world, nx, ny)) {
+                    seen[worldgen_world_index(world, nx, ny)] = 1;
+                    queue[tail++] = worldgen_world_index(world, nx, ny);
+                }
+            }
+        }
+    }
+    free(queue);
+    free(seen);
+    return found;
+}
+
 static void print_stats(const worldgen_world *world, double milliseconds)
 {
     int tiles = world->width * world->height;
@@ -57,6 +112,10 @@ static void print_stats(const worldgen_world *world, double milliseconds)
         printf(" | level %d %.1f%%", level, 100.0 * levels[level] / tiles);
     }
     printf("\n");
+    if (world->river_entry.x >= 0) {
+        printf("river entry (%d, %d), exit (%d, %d), navigable: %s\n", world->river_entry.x, world->river_entry.y,
+            world->river_exit.x, world->river_exit.y, river_is_navigable(world) ? "yes" : "NO");
+    }
 }
 
 int main(int argc, char **argv)

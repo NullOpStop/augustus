@@ -30,7 +30,7 @@ void worldgen_enforce_single_steps(worldgen_world *world);
 void worldgen_generate_shape(worldgen_world *world);
 
 /**
- * Sea and shorelines. Rivers, lakes and marsh come later.
+ * Sea, lakes and rivers from a drainage simulation, plus shallows along every shore.
  */
 void worldgen_generate_water(worldgen_world *world);
 

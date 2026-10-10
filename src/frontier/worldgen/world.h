@@ -46,6 +46,11 @@ typedef enum {
 } worldgen_deposit;
 
 typedef struct {
+    int x;
+    int y;
+} worldgen_point;
+
+typedef struct {
     uint32_t seed;
     int size;                       // world is size x size tiles
     int climate;                    // same values as the engine: 0 central, 1 northern, 2 desert
@@ -62,6 +67,11 @@ typedef struct {
     int height;
     worldgen_settings settings;
     double sea_level;               // threshold on elevation below which the template wants sea
+    worldgen_point inflow;          // map edge tile where a river flows in from off the map, x < 0 if none
+    double drain_x;                 // downhill direction across the world; water leaves through edges
+    double drain_y;                 // on that side. Both zero means it may leave through any edge
+    worldgen_point river_entry;     // navigable river ends on the map edge, used by trade ships; x < 0 if none
+    worldgen_point river_exit;
     double *elevation;              // continuous height, 0..1
     uint8_t *level;                 // engine elevation, 0..WORLDGEN_MAX_LEVEL
     uint8_t *water;                 // worldgen_water

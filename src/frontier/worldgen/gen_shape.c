@@ -59,7 +59,8 @@ static void init_template(const worldgen_world *world, worldgen_rng *rng, templa
             break;
         case WORLDGEN_TEMPLATE_RIVER_VALLEY:
         default:
-            base_sea_level = 0.16;
+            // almost no sea: the valley's water is its river and lakes
+            base_sea_level = 0.04;
             break;
     }
     params->sea_level = clamp(base_sea_level + (settings->water - 50) * 0.002, 0.05, 0.6);
@@ -82,7 +83,8 @@ static double template_bias(const worldgen_world *world, const template_params *
             double centre = 0.12 * sin(along * 2 * PI * 1.3 + params->phase[0]) +
                 0.05 * sin(along * 2 * PI * 3.1 + params->phase[1]);
             double distance = fabs(across - centre);
-            return -0.6 * exp(-(distance / 0.1) * (distance / 0.1)) + 0.9 * distance - 0.1;
+            // tilted so the valley drains towards one end
+            return -0.6 * exp(-(distance / 0.1) * (distance / 0.1)) + 0.9 * distance - 0.1 - 0.25 * along;
         }
         case WORLDGEN_TEMPLATE_COASTAL: {
             // sea on one side, rising inland
@@ -237,6 +239,32 @@ void worldgen_enforce_single_steps(worldgen_world *world)
     }
 }
 
+// The river valley drains along its axis, fed by a river entering at the lowest point of the upstream edge
+static void set_drainage(worldgen_world *world, const template_params *params)
+{
+    if (world->settings.template_type != WORLDGEN_TEMPLATE_RIVER_VALLEY) {
+        return;
+    }
+    world->drain_x = params->cos_angle;
+    world->drain_y = params->sin_angle;
+    double lowest = 2;
+    for (int y = 0; y < world->height; y++) {
+        for (int x = 0; x < world->width; x++) {
+            if (x > 0 && y > 0 && x < world->width - 1 && y < world->height - 1) {
+                continue;
+            }
+            double along = ((x + 0.5) / world->width - 0.5) * params->cos_angle +
+                ((y + 0.5) / world->height - 0.5) * params->sin_angle;
+            double elevation = world->elevation[worldgen_world_index(world, x, y)];
+            if (along < -0.3 && elevation < lowest) {
+                lowest = elevation;
+                world->inflow.x = x;
+                world->inflow.y = y;
+            }
+        }
+    }
+}
+
 void worldgen_generate_shape(worldgen_world *world)
 {
     worldgen_rng rng;
@@ -248,6 +276,7 @@ void worldgen_generate_shape(worldgen_world *world)
     world->sea_level = params.sea_level;
 
     generate_elevation(world, &noise, &params);
+    set_drainage(world, &params);
     quantize_levels(world, &params);
 
     size_t tiles = (size_t) world->width * world->height;
