@@ -15,7 +15,8 @@ typedef enum {
     WORLDGEN_STAGE_SURFACE,
     WORLDGEN_STAGE_RESOURCES,
     WORLDGEN_STAGE_SITES,
-    WORLDGEN_STAGE_VARIANT
+    WORLDGEN_STAGE_VARIANT,
+    WORLDGEN_STAGE_RAMPS
 } worldgen_stage;
 
 /**
@@ -38,5 +39,15 @@ void worldgen_generate_water(worldgen_world *world);
  * Forests, meadow, rock outcrops and marsh.
  */
 void worldgen_generate_surface(worldgen_world *world);
+
+/**
+ * Access ramps joining every terrace to the land below it, where the terrain allows.
+ */
+void worldgen_generate_ramps(worldgen_world *world);
+
+/**
+ * Start site, land entry and exit on the map edge, and the road joining them through the start.
+ */
+void worldgen_generate_sites(worldgen_world *world);
 
 #endif // FRONTIER_WORLDGEN_STAGES_H

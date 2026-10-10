@@ -112,6 +112,16 @@ static void print_stats(const worldgen_world *world, double milliseconds)
         printf(" | level %d %.1f%%", level, 100.0 * levels[level] / tiles);
     }
     printf("\n");
+    int ramps = 0;
+    int road = 0;
+    for (int i = 0; i < tiles; i++) {
+        ramps += (world->ramp[i] & WORLDGEN_RAMP_ORIGIN) != 0;
+        road += world->road[i];
+    }
+    printf("start (%d, %d) level %d, entry (%d, %d), exit (%d, %d), road %d tiles, %d ramps\n",
+        world->start.x, world->start.y,
+        world->start.x >= 0 ? world->level[worldgen_world_index(world, world->start.x, world->start.y)] : -1,
+        world->entry.x, world->entry.y, world->exit.x, world->exit.y, road, ramps);
     if (world->river_entry.x >= 0) {
         printf("river entry (%d, %d), exit (%d, %d), navigable: %s\n", world->river_entry.x, world->river_entry.y,
             world->river_exit.x, world->river_exit.y, river_is_navigable(world) ? "yes" : "NO");

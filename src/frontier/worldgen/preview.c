@@ -1,5 +1,7 @@
 #include "preview.h"
 
+#include <stdlib.h>
+
 static const uint8_t LEVEL_COLORS[WORLDGEN_MAX_LEVEL + 1][3] = {
     {150, 190, 100},
     {112, 156, 72},
@@ -18,6 +20,9 @@ static const uint8_t SURFACE_COLORS[][3] = {
     {92, 120, 96}    // marsh
 };
 
+static const uint8_t ROAD[3] = {214, 196, 150};
+static const uint8_t START[3] = {214, 40, 40};
+static const uint8_t RAMP[3] = {240, 160, 40};
 static const uint8_t DEEP_WATER[3] = {38, 78, 122};
 static const uint8_t SHALLOW_WATER[3] = {66, 118, 166};
 
@@ -43,6 +48,15 @@ static int is_cliff(const worldgen_world *world, int x, int y)
 uint32_t worldgen_preview_color(const worldgen_world *world, int x, int y)
 {
     int index = worldgen_world_index(world, x, y);
+    if (world->start.x >= 0 && abs(x - world->start.x) <= 2 && abs(y - world->start.y) <= 2) {
+        return pack(START);
+    }
+    if (world->ramp[index]) {
+        return pack(RAMP);
+    }
+    if (world->road[index]) {
+        return pack(ROAD);
+    }
     if (world->water[index] == WORLDGEN_WATER_DEEP) {
         return pack(DEEP_WATER);
     }

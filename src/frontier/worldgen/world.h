@@ -50,6 +50,13 @@ typedef struct {
     int y;
 } worldgen_point;
 
+// Ramp tile flags; the low two bits hold the direction up the ramp
+#define WORLDGEN_RAMP_DIRECTION_MASK 0x03
+#define WORLDGEN_RAMP_LOWER 0x10         // ramp tile on the lower level
+#define WORLDGEN_RAMP_UPPER 0x20         // ramp tile on the upper level, drawn over the cliff
+#define WORLDGEN_RAMP_ORIGIN 0x40        // top-left tile of the 2x2 ramp, where the engine places it
+#define WORLDGEN_RAMP_RESERVED 0x80      // used while placing ramps only
+
 typedef struct {
     uint32_t seed;
     int size;                       // world is size x size tiles
@@ -72,12 +79,17 @@ typedef struct {
     double drain_y;                 // on that side. Both zero means it may leave through any edge
     worldgen_point river_entry;     // navigable river ends on the map edge, used by trade ships; x < 0 if none
     worldgen_point river_exit;
+    worldgen_point start;           // where the player's settlement begins, x < 0 if none
+    worldgen_point entry;           // land entry and exit on the map edge, joined to the start by the road
+    worldgen_point exit;
     double *elevation;              // continuous height, 0..1
     uint8_t *level;                 // engine elevation, 0..WORLDGEN_MAX_LEVEL
     uint8_t *water;                 // worldgen_water
     uint8_t *surface;               // worldgen_surface
     uint8_t *deposit;               // worldgen_deposit
     uint8_t *variant;               // random byte per tile; the engine uses it to pick image variants
+    uint8_t *road;                  // 1 where the road runs
+    uint8_t *ramp;                  // WORLDGEN_RAMP_* flags
 } worldgen_world;
 
 void worldgen_settings_default(worldgen_settings *settings);
@@ -100,5 +112,11 @@ void worldgen_world_free(worldgen_world *world);
 int worldgen_world_index(const worldgen_world *world, int x, int y);
 
 int worldgen_world_contains(const worldgen_world *world, int x, int y);
+
+/**
+ * @return 1 if any neighbour, including diagonals, is lower: the engine draws such tiles as cliffs,
+ *         which cannot be walked or built on
+ */
+int worldgen_world_is_slope(const worldgen_world *world, int x, int y);
 
 #endif // FRONTIER_WORLDGEN_WORLD_H

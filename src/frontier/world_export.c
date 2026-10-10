@@ -1,5 +1,9 @@
 #include "world_export.h"
 
+#include "core/image.h"
+#include "core/log.h"
+#include "editor/tool_restriction.h"
+#include "map/building_tiles.h"
 #include "map/elevation.h"
 #include "map/grid.h"
 #include "map/image_context.h"
@@ -23,6 +27,9 @@ int frontier_world_export_size_index(int size)
 
 static int terrain_for_tile(const worldgen_world *world, int index)
 {
+    if (world->road[index]) {
+        return TERRAIN_ROAD;
+    }
     switch (world->water[index]) {
         case WORLDGEN_WATER_DEEP:
             return TERRAIN_WATER;
@@ -47,27 +54,6 @@ static int terrain_for_tile(const worldgen_world *world, int index)
     }
 }
 
-static int is_clear_land(const worldgen_world *world, int x, int y)
-{
-    int index = worldgen_world_index(world, x, y);
-    return world->water[index] == WORLDGEN_WATER_NONE &&
-        (world->surface[index] == WORLDGEN_SURFACE_GRASS || world->surface[index] == WORLDGEN_SURFACE_MEADOW);
-}
-
-// Placeholder until the sites stage exists: the clear land tile in column x closest to the middle
-static int find_edge_point(const worldgen_world *world, int x, int *out_y)
-{
-    int middle = world->height / 2;
-    for (int offset = 0; offset < world->height; offset++) {
-        int y = middle + ((offset & 1) ? -(offset + 1) / 2 : offset / 2);
-        if (worldgen_world_contains(world, x, y) && is_clear_land(world, x, y)) {
-            *out_y = y;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static void update_tile_images(int width, int height)
 {
     map_elevation_remove_cliffs();
@@ -81,6 +67,48 @@ static void update_tile_images(int width, int height)
     // trees and shrubs are not recalculated when a scenario loads, so set their images now
     map_tiles_update_region_trees(0, 0, width - 1, height - 1);
     map_tiles_update_region_shrub(0, 0, width - 1, height - 1);
+    map_tiles_update_all_roads();
+}
+
+// Ramps need the cliff tiles the elevation pass marks, so they go in after it; the editor's own check
+// confirms each one matches what the engine expects
+static void place_ramps(const worldgen_world *world)
+{
+    int placed = 0;
+    int rejected = 0;
+    for (int y = 0; y < world->height; y++) {
+        for (int x = 0; x < world->width; x++) {
+            if (!(world->ramp[worldgen_world_index(world, x, y)] & WORLDGEN_RAMP_ORIGIN)) {
+                continue;
+            }
+            map_tile tile = { x, y, map_grid_offset(x, y) };
+            int orientation;
+            if (!editor_tool_can_place_access_ramp(&tile, &orientation)) {
+                rejected++;
+                continue;
+            }
+            map_building_tiles_add(0, x, y, 2, image_group(GROUP_TERRAIN_ACCESS_RAMP) + orientation,
+                TERRAIN_ACCESS_RAMP);
+            placed++;
+        }
+    }
+    if (rejected) {
+        log_error("Frontier: ramps rejected by the engine:", 0, rejected);
+    }
+    log_info("Frontier: ramps placed:", 0, placed);
+}
+
+static void update_images_after_ramps(void)
+{
+    map_image_context_reset_water();
+    map_image_context_reset_elevation();
+    map_tiles_update_all_elevation_editor();
+    map_tiles_update_all_rocks();
+    map_tiles_update_all_empty_land();
+    map_tiles_update_all_meadow();
+    map_tiles_update_all_water();
+    map_tiles_update_all_marshland();
+    map_tiles_update_all_roads();
 }
 
 int frontier_world_export(const worldgen_world *world)
@@ -98,12 +126,11 @@ int frontier_world_export(const worldgen_world *world)
         }
     }
 
-    int edge_y;
-    if (find_edge_point(world, 0, &edge_y)) {
-        scenario_editor_set_entry_point(0, edge_y);
+    if (world->entry.x >= 0) {
+        scenario_editor_set_entry_point(world->entry.x, world->entry.y);
     }
-    if (find_edge_point(world, world->width - 1, &edge_y)) {
-        scenario_editor_set_exit_point(world->width - 1, edge_y);
+    if (world->exit.x >= 0) {
+        scenario_editor_set_exit_point(world->exit.x, world->exit.y);
     }
 
     if (world->river_entry.x >= 0) {
@@ -114,5 +141,7 @@ int frontier_world_export(const worldgen_world *world)
     }
 
     update_tile_images(world->width, world->height);
+    place_ramps(world);
+    update_images_after_ramps();
     return 1;
 }

@@ -50,6 +50,9 @@ worldgen_world *worldgen_world_create(const worldgen_settings *settings)
     world->inflow.x = world->inflow.y = -1;
     world->river_entry.x = world->river_entry.y = -1;
     world->river_exit.x = world->river_exit.y = -1;
+    world->start.x = world->start.y = -1;
+    world->entry.x = world->entry.y = -1;
+    world->exit.x = world->exit.y = -1;
     size_t tiles = (size_t) world->width * world->height;
     world->elevation = calloc(tiles, sizeof(double));
     world->level = calloc(tiles, sizeof(uint8_t));
@@ -57,8 +60,10 @@ worldgen_world *worldgen_world_create(const worldgen_settings *settings)
     world->surface = calloc(tiles, sizeof(uint8_t));
     world->deposit = calloc(tiles, sizeof(uint8_t));
     world->variant = calloc(tiles, sizeof(uint8_t));
+    world->road = calloc(tiles, sizeof(uint8_t));
+    world->ramp = calloc(tiles, sizeof(uint8_t));
     if (!world->elevation || !world->level || !world->water || !world->surface || !world->deposit ||
-        !world->variant) {
+        !world->variant || !world->road || !world->ramp) {
         worldgen_world_free(world);
         return 0;
     }
@@ -76,6 +81,8 @@ void worldgen_world_free(worldgen_world *world)
     free(world->surface);
     free(world->deposit);
     free(world->variant);
+    free(world->road);
+    free(world->ramp);
     free(world);
 }
 
@@ -87,4 +94,18 @@ int worldgen_world_index(const worldgen_world *world, int x, int y)
 int worldgen_world_contains(const worldgen_world *world, int x, int y)
 {
     return x >= 0 && y >= 0 && x < world->width && y < world->height;
+}
+
+int worldgen_world_is_slope(const worldgen_world *world, int x, int y)
+{
+    int level = world->level[worldgen_world_index(world, x, y)];
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (worldgen_world_contains(world, x + dx, y + dy) &&
+                world->level[worldgen_world_index(world, x + dx, y + dy)] < level) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }

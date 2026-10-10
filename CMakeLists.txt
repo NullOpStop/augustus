@@ -785,10 +785,13 @@ set(TRANSLATION_FILES
 )
 
 set(FRONTIER_WORLDGEN_FILES
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_ramps.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_shape.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_sites.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_surface.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_water.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/generator.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/heap.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/noise.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/preview.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/rng.c

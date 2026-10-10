@@ -22,6 +22,8 @@ worldgen_world *worldgen_generate(const worldgen_settings *settings)
     worldgen_generate_shape(world);
     worldgen_generate_water(world);
     worldgen_generate_surface(world);
+    worldgen_generate_ramps(world);
+    worldgen_generate_sites(world);
     generate_variants(world);
     return world;
 }

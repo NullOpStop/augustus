@@ -13,22 +13,6 @@
 
 static const int DIRECTIONS[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
 
-// Tiles with any lower neighbour (including diagonals) become cliff tiles in the engine,
-// which do not show trees or rocks, so leave them as grass
-static int is_slope(const worldgen_world *world, int x, int y)
-{
-    int level = world->level[worldgen_world_index(world, x, y)];
-    for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-            if (worldgen_world_contains(world, x + dx, y + dy) &&
-                world->level[worldgen_world_index(world, x + dx, y + dy)] < level) {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 static void compute_water_distance(const worldgen_world *world, uint8_t *distance, int *queue)
 {
     int tiles = world->width * world->height;
@@ -91,7 +75,8 @@ void worldgen_generate_surface(worldgen_world *world)
     for (int y = 0; y < world->height; y++) {
         for (int x = 0; x < world->width; x++) {
             int index = worldgen_world_index(world, x, y);
-            if (world->water[index] != WORLDGEN_WATER_NONE || is_slope(world, x, y)) {
+            // cliff tiles do not show trees or rocks in the engine, so leave them as grass
+            if (world->water[index] != WORLDGEN_WATER_NONE || worldgen_world_is_slope(world, x, y)) {
                 world->surface[index] = WORLDGEN_SURFACE_GRASS;
                 continue;
             }

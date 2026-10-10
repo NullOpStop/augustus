@@ -1,5 +1,6 @@
 #include "frontier_game.h"
 
+#include "city/view.h"
 #include "core/dir.h"
 #include "core/image.h"
 #include "core/lang.h"
@@ -8,6 +9,7 @@
 #include "frontier/worldgen/generator.h"
 #include "game/file.h"
 #include "game/file_editor.h"
+#include "map/grid.h"
 #include "scenario/property.h"
 #include "sound/music.h"
 #include "window/city.h"
@@ -32,6 +34,7 @@ int frontier_game_start(const worldgen_settings *settings)
     game_file_editor_create_scenario(size_index);
     scenario_change_climate(settings->climate);
     int exported = frontier_world_export(world);
+    worldgen_point start = world->start;
     worldgen_world_free(world);
     if (!exported) {
         log_error("Frontier: export failed", 0, 0);
@@ -54,6 +57,9 @@ int frontier_game_start(const worldgen_settings *settings)
     if (!game_file_start_scenario_by_name((const uint8_t *) SCENARIO_NAME)) {
         log_error("Frontier: could not start scenario", path, 0);
         return 0;
+    }
+    if (start.x >= 0) {
+        city_view_go_to_grid_offset(map_grid_offset(start.x, start.y));
     }
     sound_music_update(1);
     return 1;

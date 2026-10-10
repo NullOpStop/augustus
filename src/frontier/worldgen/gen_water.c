@@ -1,3 +1,4 @@
+#include "frontier/worldgen/heap.h"
 #include "frontier/worldgen/noise.h"
 #include "frontier/worldgen/rng.h"
 #include "frontier/worldgen/stages.h"
@@ -17,54 +18,6 @@
 #define MEANDER_SCALE 10.0
 
 static const int DIRECTIONS[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
-
-typedef struct {
-    double key;
-    int index;
-} flood_item;
-
-typedef struct {
-    flood_item *items;
-    int size;
-} flood_heap;
-
-static void heap_push(flood_heap *heap, double key, int index)
-{
-    int child = heap->size++;
-    while (child > 0) {
-        int parent = (child - 1) / 2;
-        if (heap->items[parent].key <= key) {
-            break;
-        }
-        heap->items[child] = heap->items[parent];
-        child = parent;
-    }
-    heap->items[child].key = key;
-    heap->items[child].index = index;
-}
-
-static flood_item heap_pop(flood_heap *heap)
-{
-    flood_item top = heap->items[0];
-    flood_item last = heap->items[--heap->size];
-    int parent = 0;
-    while (1) {
-        int child = parent * 2 + 1;
-        if (child >= heap->size) {
-            break;
-        }
-        if (child + 1 < heap->size && heap->items[child + 1].key < heap->items[child].key) {
-            child++;
-        }
-        if (last.key <= heap->items[child].key) {
-            break;
-        }
-        heap->items[parent] = heap->items[child];
-        parent = child;
-    }
-    heap->items[parent] = last;
-    return top;
-}
 
 typedef struct {
     uint8_t *sea;
@@ -147,8 +100,8 @@ static int is_outlet(const worldgen_world *world, const uint8_t *sea, int x, int
 static int flood(const worldgen_world *world, const worldgen_noise *noise, drainage *result)
 {
     int tiles = world->width * world->height;
-    flood_heap heap;
-    heap.items = malloc(tiles * sizeof(flood_item));
+    worldgen_heap heap;
+    heap.items = malloc(tiles * sizeof(worldgen_heap_item));
     uint8_t *visited = calloc(tiles, 1);
     if (!heap.items || !visited) {
         free(heap.items);
@@ -164,13 +117,13 @@ static int flood(const worldgen_world *world, const worldgen_noise *noise, drain
                 visited[index] = 1;
                 result->filled[index] = world->elevation[index];
                 result->downstream[index] = -1;
-                heap_push(&heap, world->elevation[index], index);
+                worldgen_heap_push(&heap, world->elevation[index], index);
             }
         }
     }
     int visited_count = 0;
     while (heap.size > 0) {
-        flood_item item = heap_pop(&heap);
+        worldgen_heap_item item = worldgen_heap_pop(&heap);
         result->order[visited_count++] = item.index;
         int x = item.index % world->width;
         int y = item.index / world->width;
@@ -192,7 +145,7 @@ static int flood(const worldgen_world *world, const worldgen_noise *noise, drain
             }
             result->filled[neighbour] = level;
             result->downstream[neighbour] = item.index;
-            heap_push(&heap, result->filled[neighbour], neighbour);
+            worldgen_heap_push(&heap, result->filled[neighbour], neighbour);
         }
     }
     free(heap.items);
