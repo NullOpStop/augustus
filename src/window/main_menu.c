@@ -23,12 +23,13 @@
 #include "window/config.h"
 #include "window/editor/map.h"
 #include "window/file_dialog.h"
+#include "window/frontier_setup.h"
 #include "window/plain_message_dialog.h"
 #include "window/popup_dialog.h"
 #include "window/select_campaign.h"
 #include "window/video.h"
 
-#define MAX_BUTTONS 6
+#define MAX_BUTTONS 7
 
 static void button_click(const generic_button *button);
 
@@ -38,12 +39,13 @@ static struct {
 } data;
 
 static generic_button buttons[] = {
-    {192, 130, 256, 25, button_click, 0, 1},
-    {192, 170, 256, 25, button_click, 0, 2},
-    {192, 210, 256, 25, button_click, 0, 3},
-    {192, 250, 256, 25, button_click, 0, 4},
-    {192, 290, 256, 25, button_click, 0, 5},
-    {192, 330, 256, 25, button_click, 0, 6},
+    {192, 130, 256, 25, button_click, 0, 7},
+    {192, 170, 256, 25, button_click, 0, 1},
+    {192, 210, 256, 25, button_click, 0, 2},
+    {192, 250, 256, 25, button_click, 0, 3},
+    {192, 290, 256, 25, button_click, 0, 4},
+    {192, 330, 256, 25, button_click, 0, 5},
+    {192, 370, 256, 25, button_click, 0, 6},
 };
 
 static void draw_version_string(void)
@@ -69,7 +71,7 @@ static void draw_background(void)
 
     if (!window_is(WINDOW_FILE_DIALOG)) {
         graphics_in_dialog();
-        outer_panel_draw(162, 32, 20, 22);
+        outer_panel_draw(162, 32, 20, 25);
         if (!data.logo_image_id) {
             data.logo_image_id = assets_get_image_id("UI", "Main Menu Banner");
         }
@@ -91,12 +93,13 @@ static void draw_foreground(void)
         }
     }
 
-    lang_text_draw_centered(CUSTOM_TRANSLATION, TR_MAIN_MENU_SELECT_CAMPAIGN, 192, 137, 256, FONT_NORMAL_GREEN);
-    lang_text_draw_centered(30, 2, 192, 177, 256, FONT_NORMAL_GREEN);
-    lang_text_draw_centered(30, 3, 192, 217, 256, FONT_NORMAL_GREEN);
-    lang_text_draw_centered(9, 8, 192, 257, 256, FONT_NORMAL_GREEN);
-    lang_text_draw_centered(2, 0, 192, 297, 256, FONT_NORMAL_GREEN);
-    lang_text_draw_centered(30, 5, 192, 337, 256, FONT_NORMAL_GREEN);
+    text_draw_centered((const uint8_t *) "New Frontier", 192, 137, 256, FONT_NORMAL_GREEN, 0);
+    lang_text_draw_centered(CUSTOM_TRANSLATION, TR_MAIN_MENU_SELECT_CAMPAIGN, 192, 177, 256, FONT_NORMAL_GREEN);
+    lang_text_draw_centered(30, 2, 192, 217, 256, FONT_NORMAL_GREEN);
+    lang_text_draw_centered(30, 3, 192, 257, 256, FONT_NORMAL_GREEN);
+    lang_text_draw_centered(9, 8, 192, 297, 256, FONT_NORMAL_GREEN);
+    lang_text_draw_centered(2, 0, 192, 337, 256, FONT_NORMAL_GREEN);
+    lang_text_draw_centered(30, 5, 192, 377, 256, FONT_NORMAL_GREEN);
 
     graphics_reset_dialog();
 }
@@ -144,6 +147,8 @@ static void button_click(const generic_button *button)
         window_config_show(CONFIG_FIRST_PAGE, 0, 1);
     } else if (type == 6) {
         window_popup_dialog_show(POPUP_DIALOG_QUIT, confirm_exit, 1);
+    } else if (type == 7) {
+        window_frontier_setup_show();
     }
 }
 

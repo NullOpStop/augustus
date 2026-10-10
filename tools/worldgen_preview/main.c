@@ -3,6 +3,7 @@
 //                         [--scale N] [--out FILE]
 
 #include "frontier/worldgen/generator.h"
+#include "frontier/worldgen/preview.h"
 
 #define MINIZ_IMPLEMENTATION
 #include "miniz/miniz.h"
@@ -11,41 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-static const unsigned char LEVEL_COLORS[WORLDGEN_MAX_LEVEL + 1][3] = {
-    {150, 190, 100},
-    {112, 156, 72},
-    {150, 152, 84},
-    {164, 132, 92},
-    {136, 112, 92},
-    {224, 220, 210}
-};
-
-static const unsigned char SURFACE_TINT[][3] = {
-    {0, 0, 0},       // grass: use the level colour
-    {196, 200, 96},  // meadow
-    {96, 128, 64},   // shrub
-    {52, 92, 48},    // forest
-    {120, 116, 110}, // rock
-    {92, 120, 96}    // marsh
-};
-
-static const unsigned char DEEP_WATER[3] = {38, 78, 122};
-static const unsigned char SHALLOW_WATER[3] = {66, 118, 166};
-
-static int is_cliff(const worldgen_world *world, int x, int y)
-{
-    static const int directions[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
-    int level = world->level[worldgen_world_index(world, x, y)];
-    for (int d = 0; d < 4; d++) {
-        int nx = x + directions[d][0];
-        int ny = y + directions[d][1];
-        if (worldgen_world_contains(world, nx, ny) && world->level[worldgen_world_index(world, nx, ny)] < level) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 static unsigned char *render(const worldgen_world *world, int scale)
 {
@@ -57,27 +23,10 @@ static unsigned char *render(const worldgen_world *world, int scale)
     }
     for (int y = 0; y < world->height; y++) {
         for (int x = 0; x < world->width; x++) {
-            int index = worldgen_world_index(world, x, y);
-            unsigned char color[3];
-            if (world->water[index] == WORLDGEN_WATER_DEEP) {
-                memcpy(color, DEEP_WATER, 3);
-            } else if (world->water[index] == WORLDGEN_WATER_SHALLOW) {
-                memcpy(color, SHALLOW_WATER, 3);
-            } else {
-                memcpy(color, LEVEL_COLORS[world->level[index]], 3);
-                int surface = world->surface[index];
-                if (surface != WORLDGEN_SURFACE_GRASS) {
-                    // blend the surface over the level colour so terraces stay readable
-                    for (int c = 0; c < 3; c++) {
-                        color[c] = (unsigned char) ((SURFACE_TINT[surface][c] * 3 + color[c]) / 4);
-                    }
-                }
-                if (is_cliff(world, x, y)) {
-                    for (int c = 0; c < 3; c++) {
-                        color[c] = (unsigned char) (color[c] * 7 / 10);
-                    }
-                }
-            }
+            uint32_t argb = worldgen_preview_color(world, x, y);
+            unsigned char color[3] = {
+                (unsigned char) (argb >> 16), (unsigned char) (argb >> 8), (unsigned char) argb
+            };
             for (int py = 0; py < scale; py++) {
                 unsigned char *row = pixels + ((size_t) (y * scale + py) * width + x * scale) * 3;
                 for (int px = 0; px < scale; px++) {

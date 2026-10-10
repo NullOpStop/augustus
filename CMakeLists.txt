@@ -722,6 +722,7 @@ set(WINDOW_FILES
     ${PROJECT_SOURCE_DIR}/src/window/empire.c
     ${PROJECT_SOURCE_DIR}/src/window/empire_sidebar_sort.c
     ${PROJECT_SOURCE_DIR}/src/window/file_dialog.c
+    ${PROJECT_SOURCE_DIR}/src/window/frontier_setup.c
     ${PROJECT_SOURCE_DIR}/src/window/gift_to_emperor.c
     ${PROJECT_SOURCE_DIR}/src/window/hold_games.c
     ${PROJECT_SOURCE_DIR}/src/window/hold_festival.c
@@ -789,12 +790,14 @@ set(FRONTIER_WORLDGEN_FILES
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/gen_water.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/generator.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/noise.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/preview.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/rng.c
     ${PROJECT_SOURCE_DIR}/src/frontier/worldgen/world.c
 )
 
 set(FRONTIER_FILES
     ${PROJECT_SOURCE_DIR}/src/frontier/dev_render.c
+    ${PROJECT_SOURCE_DIR}/src/frontier/frontier_game.c
     ${PROJECT_SOURCE_DIR}/src/frontier/world_export.c
 )
 
