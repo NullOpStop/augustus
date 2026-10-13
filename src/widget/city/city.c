@@ -411,7 +411,7 @@ static int input_coords_in_city(int x, int y)
 
 static void handle_touch_scroll(const touch *t)
 {
-    if (building_construction_type()) {
+    if (building_construction_type() && !touch_is_navigation_only()) {
         if (t->has_started) {
             int x_offset, y_offset, width, height;
             city_view_get_viewport(&x_offset, &y_offset, &width, &height);
@@ -518,7 +518,8 @@ static void handle_first_touch(map_tile *tile)
 
     handle_touch_scroll(first);
 
-    if (!input_coords_in_city(first->current_point.x, first->current_point.y) || type == BUILDING_NONE) {
+    if (!input_coords_in_city(first->current_point.x, first->current_point.y) || type == BUILDING_NONE ||
+        touch_is_navigation_only()) {
         return;
     }
 

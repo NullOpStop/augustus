@@ -22,6 +22,7 @@ static struct {
     int last_scroll_position;
     touch_mode mode;
     emulated_mouse_click touchpad_mode_click_type;
+    int navigation_only;
 } data;
 
 static int start_delayed(const touch *t)
@@ -328,4 +329,14 @@ void touch_set_mode(touch_mode mode)
 void touch_cycle_mode(void)
 {
     data.mode = (data.mode + 1) % TOUCH_MODE_MAX;
+}
+
+void touch_set_navigation_only(int enabled)
+{
+    data.navigation_only = enabled;
+}
+
+int touch_is_navigation_only(void)
+{
+    return data.navigation_only;
 }

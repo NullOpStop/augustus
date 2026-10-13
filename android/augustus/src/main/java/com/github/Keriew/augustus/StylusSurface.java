@@ -18,7 +18,8 @@ import org.libsdl.app.SDLSurface;
  * While the pen is near the screen (hovering or touching), it drives the mouse instead:
  * the tip is the left button, the tip with the side button held is the right button and
  * hovering moves the cursor. Fingers are ignored meanwhile, so a resting palm does nothing.
- * Once the pen leaves hover range, fingers work exactly as before (drag to scroll, pinch to zoom).
+ * Once the pen leaves hover range, fingers drag to scroll and pinch to zoom as before, but no
+ * longer build: with a building selected, a finger drag scrolls the map instead.
  */
 public class StylusSurface extends SDLSurface {
     // Android ends hover just before the tip touches down and restarts it after the tip
@@ -46,6 +47,9 @@ public class StylusSurface extends SDLSurface {
         });
     }
 
+    // Once a stylus is in use, fingers only scroll and zoom the map; the pen does the building
+    private static native void stylusDetected();
+
     private static boolean isStylus(MotionEvent event, int index) {
         int toolType = event.getToolType(index);
         return toolType == MotionEvent.TOOL_TYPE_STYLUS || toolType == MotionEvent.TOOL_TYPE_ERASER;
@@ -72,6 +76,7 @@ public class StylusSurface extends SDLSurface {
             return;
         }
         penMode = true;
+        stylusDetected();
         Log.d(TAG, "pen mode on");
         // End any finger gesture in progress so the game doesn't keep a stuck touch
         if (fingersForwarded) {

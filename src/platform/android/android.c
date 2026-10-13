@@ -2,6 +2,7 @@
 
 #include "core/dir.h"
 #include "core/file.h"
+#include "input/touch.h"
 #include "platform/android/asset_handler.h"
 #include "platform/android/jni.h"
 #include "platform/file_manager.h"
@@ -196,4 +197,9 @@ int android_remove_file(const char *filename)
 JNIEXPORT void JNICALL Java_com_github_Keriew_augustus_AugustusMainActivity_gotDirectory(JNIEnv *env, jobject thiz)
 {
     has_directory = 1;
+}
+
+JNIEXPORT void JNICALL Java_com_github_Keriew_augustus_StylusSurface_stylusDetected(JNIEnv *env, jclass clazz)
+{
+    touch_set_navigation_only(1);
 }

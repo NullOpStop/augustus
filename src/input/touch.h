@@ -51,6 +51,10 @@ int touch_in_use(int index);
 int touch_to_mouse(void);
 
 void touch_set_mode(touch_mode mode);
+
+// When a pointer (e.g. a stylus) does the building, touch only scrolls and zooms the map
+void touch_set_navigation_only(int enabled);
+int touch_is_navigation_only(void);
 void touch_cycle_mode(void);
 
 #endif // INPUT_TOUCH_H
