@@ -1,4 +1,4 @@
-Get the owner's verdict on the S Pen build ("Augustus dev" on the phone): tip = left click, side button + tip = right click, hover moves the cursor.
+Get the owner's verdict on pen mode v2 ("Augustus dev" on the phone): pen in hover range = mouse (tip left, side button + tip right, hover moves cursor, fingers ignored); pen out of range = normal finger touch. Logcat tag `AugustusPen` shows mode switches.
 
 State: branch `spen-mouse` adds `android/augustus/.../StylusSurface.java`, which feeds the stylus to SDL as a mouse instead of a finger (SDL2 2.32.10 drops stylus buttons; touch mode needs a confirm tap for placements). Debug build only, installed alongside the official app (`com.github.Keriew.augustus.debug`). Game files are on the phone at shared storage `Caesar3/` (unpacked from the GOG installer).
 
