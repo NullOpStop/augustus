@@ -1,9 +1,11 @@
 package com.github.Keriew.augustus;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
 import org.libsdl.app.SDLActivity;
+import org.libsdl.app.SDLSurface;
 
 public class AugustusMainActivity extends SDLActivity {
     private static final int GET_FOLDER_RESULT = 500;
@@ -13,6 +15,11 @@ public class AugustusMainActivity extends SDLActivity {
         super.onStop();
         releaseAssetManager();
         FileManager.clearCache();
+    }
+
+    @Override
+    protected SDLSurface createSDLSurface(Context context) {
+        return new StylusSurface(context, getMotionListener());
     }
 
     @Override
