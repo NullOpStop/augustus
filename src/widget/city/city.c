@@ -53,6 +53,7 @@ static struct {
     int new_start_grid_offset;
     int capture_input;
     int routing_grid_offset;
+    int touch_navigating;
 } data;
 
 void set_city_clip_rectangle(void)
@@ -353,6 +354,15 @@ static void build_end(void)
     }
 }
 
+// With touch, a building left selected turns one-finger drags into construction instead of
+// scrolling, so deselect it once the placement is confirmed
+static void touch_build_end(void)
+{
+    build_end();
+    building_construction_clear_type();
+    window_request_refresh();
+}
+
 static void scroll_map(const mouse *m)
 {
     pixel_offset delta;
@@ -409,9 +419,16 @@ static int input_coords_in_city(int x, int y)
     return (x >= 0 && x < width && y >= 0 && y < height);
 }
 
+// Touch only moves the map, even with a building selected, when a stylus does the building
+// or once the gesture has used two fingers
+static int touch_only_navigates(void)
+{
+    return touch_is_navigation_only() || data.touch_navigating;
+}
+
 static void handle_touch_scroll(const touch *t)
 {
-    if (building_construction_type() && !touch_is_navigation_only()) {
+    if (building_construction_type() && !touch_only_navigates()) {
         if (t->has_started) {
             int x_offset, y_offset, width, height;
             city_view_get_viewport(&x_offset, &y_offset, &width, &height);
@@ -431,6 +448,9 @@ static void handle_touch_scroll(const touch *t)
     if (t->has_started || was_click) {
         scroll_drag_start(1);
         return;
+    }
+    if (data.touch_navigating) {
+        scroll_drag_start(1);
     }
     if (!touch_not_click(t)) {
         return;
@@ -519,7 +539,7 @@ static void handle_first_touch(map_tile *tile)
     handle_touch_scroll(first);
 
     if (!input_coords_in_city(first->current_point.x, first->current_point.y) || type == BUILDING_NONE ||
-        touch_is_navigation_only()) {
+        touch_only_navigates()) {
         return;
     }
 
@@ -547,7 +567,7 @@ static void handle_first_touch(map_tile *tile)
             }
             if (first->has_ended) {
                 if (data.selected_tile.grid_offset == tile->grid_offset) {
-                    build_end();
+                    touch_build_end();
                     widget_city_clear_current_tile();
                     data.new_start_grid_offset = 0;
                 } else {
@@ -567,7 +587,7 @@ static void handle_first_touch(map_tile *tile)
         has_confirmed_construction(data.selected_tile.grid_offset, tile->grid_offset, size)) {
         build_start(&data.selected_tile);
         build_move(&data.selected_tile);
-        build_end();
+        touch_build_end();
         widget_city_clear_current_tile();
     } else if (first->has_ended) {
         data.selected_tile = *tile;
@@ -579,6 +599,7 @@ static void handle_touch(void)
     const touch *first = touch_get_earliest();
     if (!first->in_use) {
         scroll_restore_margins();
+        data.touch_navigating = 0;
         return;
     }
 
@@ -596,11 +617,22 @@ static void handle_touch(void)
         scroll_restore_margins();
     }
 
+    if (touch_get_latest()->in_use && !data.touch_navigating) {
+        data.touch_navigating = 1;
+        // Undo a road or area the first finger had started drawing; the building stays selected
+        if (building_construction_in_progress()) {
+            building_construction_cancel();
+        }
+    }
+
     handle_last_touch();
     handle_first_touch(tile);
 
     if (first->has_ended) {
         data.capture_input = 0;
+        if (!touch_get_latest()->in_use) {
+            data.touch_navigating = 0;
+        }
     }
 
     building_construction_reset_draw_as_constructing();

@@ -1,4 +1,4 @@
-Get the owner's verdict on pen mode v3 ("Augustus dev" on the phone): pen in hover range = mouse; pen away = fingers scroll/zoom, and once a pen has been seen fingers never build (a selected building tool no longer hijacks finger drags). Logcat tag `AugustusPen`.
+Get the owner's verdict on v4 ("Augustus dev"): finger-only play now deselects the tool after each confirmed placement, and any two-finger gesture pans/zooms even with a tool selected; pen mode unchanged. Logcat tag `AugustusPen`.
 
 State: branch `spen-mouse` adds `android/augustus/.../StylusSurface.java`, which feeds the stylus to SDL as a mouse instead of a finger (SDL2 2.32.10 drops stylus buttons; touch mode needs a confirm tap for placements). Debug build only, installed alongside the official app (`com.github.Keriew.augustus.debug`). Game files are on the phone at shared storage `Caesar3/` (unpacked from the GOG installer).
 
