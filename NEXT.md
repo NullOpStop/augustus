@@ -7,3 +7,5 @@ Build: `. ~/dev/dev-env.sh; cd android && ./gradlew assembleDebug` — needs SDL
 Remotes: `origin` = NullOpStop/augustus (owner's existing PUBLIC GitHub fork, likely also checked out on finn-lt), `upstream` = Keriew/augustus.
 
 Waiting on owner: whether the stylus mapping is right; whether to offer it upstream as a PR.
+
+Install on the phone: `scp -P 8022 android/augustus/build/outputs/apk/debug/augustus-debug.apk 100.87.32.87:storage/downloads/augustus-spen-debug.apk`, then over `ssh -p 8022 100.87.32.87` pipe it to `rish -c "pm install -S <size>"` (Shizuku must be up; otherwise the owner taps the APK in Downloads). Read pen logs with `rish -c "logcat -d -s AugustusPen:D"`.
